@@ -24,7 +24,7 @@ jobs:
         run: echo ::set-env name=VERSION::"$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}' | tail -n1)"
 
       - name: Get all own releases
-        run: echo ::set-env name=TAGS::"$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
+        run: echo ::set-env name=TAGS::"$(wget -qO- "$ALL_OWN_RELEASES" | jq -er '.[].tag_name')"
 
       - name: Check if latest release is in own releases
         run: echo "$TAGS" | grep "^$VERSION"
