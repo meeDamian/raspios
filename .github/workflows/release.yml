@@ -39,7 +39,7 @@ jobs:
     name: Release a release
     runs-on: ubuntu-latest
 
-    if: steps.check.outputs.release == 'true'
+    if: ${{ steps.check.outputs.release == 'true' }}
 
     steps:
       - name: aaaa
