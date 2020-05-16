@@ -1,0 +1,53 @@
+name: Create new Release
+
+# Run on a push to master, and everyday at 4:20
+on:
+  push:
+    branches: [ 'master' ]
+  schedule:
+    - cron: '20 4 * * *'
+
+env:
+  LATEST_RASPBIAN: https://downloads.raspberrypi.org/raspbian_lite_latest
+  ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
+
+jobs:
+  check:
+    name: Check new Raspbian Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check for new Release
+        run: |
+          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
+          echo ::set-env name=RASPBIAN_DIRECT::"$URL"
+
+          if ! TAGS="$(curl -s "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"; then
+            exit 1
+          fi
+
+          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
+          FILE="$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}-raspbian.*.zip')"
+          VERSION="$(echo "$FILE" | cut -d- -f-3)"
+          echo ::set-env name=VERSION::"$VERSION"
+
+          echo "$TAGS" | grep "^$VERSION"
+
+
+      - name: Release new release
+        if: failure()
+        run: |
+          echo "| $RASPBIAN_DIRECT || $VERSION |"
+
+          echo ::set-env name=NEEDS_RELEASE::"true"
+
+  release:
+    name: Release a release
+    runs-on: ubuntu-latest
+
+    if: env.NEEDS_RELEASE == 'true'
+
+    steps:
+      run: echo 'aaaa'
+
+
