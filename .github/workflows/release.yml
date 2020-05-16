@@ -39,7 +39,10 @@ jobs:
     name: Release a release
     runs-on: ubuntu-latest
 
-    if: ${{ steps.check.outputs.release == 'true' }}
+    env:
+      RUNME: ${{ steps.check.outputs.release }}
+
+    if: $RUNME == 'true'
 
     steps:
       - name: aaaa
