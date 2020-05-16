@@ -17,31 +17,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check for new Release
-        id: check
-        run: |
-          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
-          echo ::set-output name=url::"$URL"
+      - name: Get direct URL of latest Raspbian release
+        run: echo ::set-env name=URL::"$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
 
-          if ! TAGS="$(curl -s "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"; then
-            exit 1
-          fi
+      - name: Get date-VERSION of latest Raspbian release
+        run: echo ::set-env name=VERSION::"$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}' | tail -n1)"
 
-          VERSION="$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}-raspbian.*.zip' | cut -d- -f-3)"
-          echo ::set-output name=VERSION::"$VERSION"
+      - name: Get all own releases
+        run: echo ::set-env name=TAGS::"$(curl -s "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
 
-          if ! echo "$TAGS" | grep "^$VERSION"; then
-            exit 1
-          fi
-
-  release:
-    name: Release a release
-    runs-on: ubuntu-latest
-
-    if: failure()
-
-    steps:
-      - name: aaaa
-        run: echo 'aaaa'
+      - name: Check if latest release is in own releases
+        run: echo "$TAGS" | grep "^$VERSION"
 
 
+      - name: Create release
+        if: failure()
+        run: echo "Creating release…"
