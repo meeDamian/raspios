@@ -48,6 +48,7 @@ jobs:
     if: env.NEEDS_RELEASE == 'true'
 
     steps:
-      run: echo 'aaaa'
+      - name: aaaa
+        run: echo 'aaaa'
 
 
