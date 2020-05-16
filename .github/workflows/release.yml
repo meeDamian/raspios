@@ -18,34 +18,28 @@ jobs:
 
     steps:
       - name: Check for new Release
+        id: check
         run: |
           URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
-          echo ::set-env name=RASPBIAN_DIRECT::"$URL"
+          echo ::set-output name=url::"$URL"
 
           if ! TAGS="$(curl -s "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"; then
-            exit 1
+            echo "::set-output name=release::true"
+            exit 0
           fi
 
-          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
-          FILE="$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}-raspbian.*.zip')"
-          VERSION="$(echo "$FILE" | cut -d- -f-3)"
-          echo ::set-env name=VERSION::"$VERSION"
+          VERSION="$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}-raspbian.*.zip' | cut -d- -f-3)"
+          echo ::set-output name=VERSION::"$VERSION"
 
-          echo "$TAGS" | grep "^$VERSION"
-
-
-      - name: Release new release
-        if: failure()
-        run: |
-          echo "| $RASPBIAN_DIRECT || $VERSION |"
-
-          echo ::set-env name=NEEDS_RELEASE::"true"
+          if ! echo "$TAGS" | grep "^$VERSION"; then
+            echo "::set-output name=release::true"
+          fi
 
   release:
     name: Release a release
     runs-on: ubuntu-latest
 
-    if: env.NEEDS_RELEASE == 'true'
+    if: steps.check.outputs.release == 'true'
 
     steps:
       - name: aaaa
