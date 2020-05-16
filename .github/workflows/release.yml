@@ -24,25 +24,21 @@ jobs:
           echo ::set-output name=url::"$URL"
 
           if ! TAGS="$(curl -s "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"; then
-            echo "::set-output name=release::true"
-            exit 0
+            exit 1
           fi
 
           VERSION="$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}-raspbian.*.zip' | cut -d- -f-3)"
           echo ::set-output name=VERSION::"$VERSION"
 
           if ! echo "$TAGS" | grep "^$VERSION"; then
-            echo "::set-output name=release::true"
+            exit 1
           fi
 
   release:
     name: Release a release
     runs-on: ubuntu-latest
 
-    env:
-      RUNME: ${{ steps.check.outputs.release }}
-
-    if: $RUNME == 'true'
+    if: failure()
 
     steps:
       - name: aaaa
