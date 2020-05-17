@@ -21,13 +21,13 @@ jobs:
         run: |
           VERSION="$(./modify-image.sh version)"
 
-          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
-          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
-            echo "Nothing to do. Exiting."
-            exit 0
-          fi
-
-          echo ::set-env name=do::"Yaaaaaaas"
+#          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
+#          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
+#            echo "Nothing to do. Exiting."
+#            exit 0
+#          fi
+#
+#          echo ::set-env name=do::"Yaaaaaaas"
 
       - name: Build
         if: env.DO != ''
@@ -36,6 +36,7 @@ jobs:
       - name: Run
         if: env.DO != ''
         run: docker run --rm --privileged -v="$(pwd)/images/:/raspbian/" builder
+
 
 
 #      - name: Create Release
