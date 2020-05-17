@@ -19,7 +19,7 @@ jobs:
         env:
           ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
         run: |
-          ls -la
+          ls -la /usr/bin/env
           echo '----'
           ./modify-image.sh version
           echo '-----'
