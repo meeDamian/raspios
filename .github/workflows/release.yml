@@ -17,24 +17,57 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get direct URL of latest Raspbian release
-        run: echo ::set-env name=URL::"$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
+      - name: Check if new Release needed
+        run: |
+          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
+          FILE="$(echo "$URL" | grep -Eo '\d{4}-\d{2}-\d{2}-raspbian.*.zip')"
+          VERSION="$(echo "$FILE" | grep -Eo '\d{4}-\d{2}-\d{2}')"
 
-      - name: Get date-VERSION of latest Raspbian release
-        run: echo ::set-env name=VERSION::"$(echo "$URL" | grep -oE '\d{4}-\d{2}-\d{2}' | tail -n1)"
+          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
+          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
+            echo "Nothig to do. Exiting."
+            exit 0
+          fi
 
-      - name: Get all own releases
-        run: echo ::set-env name=TAGS::"$(wget -qO- "$ALL_OWN_RELEASES" | jq -er '.[].tag_name')"
-
-      - name: Check if latest release is in own releases
-        if: env.TAGS == ''
-        run: echo ::set-env name=RELEASE_NEEDED::"true"
-
-      - name: Check if latest release is in own releases
-        if: env.TAGS != ''
-        run: echo "$TAGS" | grep "$VERSION" 1>&2 2>/dev/null || echo ::set-env name=RELEASE_NEEDED::"true"
+          echo ::set-env name=URL::"$URL"
+          echo ::set-env name=FILE::"$FILE"
+          echo ::set-env name=VERSION::"$VERSION"
 
 
-      - name: Create release
-        if: env.RELEASE_NEEDED == 'true'
-        run: echo "Creating release…"
+      - name: Prepare Release
+        if: env.URL != ''
+        env:
+          KEY: 54C3DD610D9D1B4AF82A37758738CD6B956F460C
+        run: |
+          mkdir -p image/mnt/
+          cd image
+
+          wget -q "$URL"{.sig,.sha256,}
+          ls -la
+
+          sha256sum -c "$FILE.sha256"
+
+          gpg --recv-key "$KEY"
+          gpg --verify "$FILE.sig"
+
+          unzip "$FILE"
+
+      - name: mount
+        if: env.URL != ''
+        run: mount -o loop "${FILE%.zip}.img" ./mnt/
+
+
+
+
+#      - name: Create Release
+#        uses: meeDamian/github-release@2.0
+#        if: env.URL != ''
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          tag: ${{ env.VERSION }}
+#          name: ${{ env.FILE }}
+#          draft: true
+#          prerelease: true
+#          allow_override: false
+#          body: |
+#            This Release adds [`firstrun.sh`](/firstrun.sh) capabilities to original Raspbian image [${{ env.FILE }}](${{ env.URL }}).
