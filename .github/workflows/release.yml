@@ -22,7 +22,7 @@ jobs:
         run: docker build -t rrr .
 
       - name: Run
-        run: docker run --rm -it --privileged -v="$(pwd)/images:/raspbian/" rrr
+        run: docker run --rm --privileged -v="$(pwd)/images:/raspbian/" rrr
 
 #      - name: Check if new Release needed
 #        env:
