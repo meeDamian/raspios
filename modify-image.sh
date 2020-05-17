@@ -1,15 +1,9 @@
 #!/usr/bin/env sh
 
-echo "1"
-
 set -e
-
-echo "2"
 
 LATEST_RASPBIAN="https://downloads.raspberrypi.org/raspbian_lite_latest"
 RASPBIAN_KEY="54C3DD610D9D1B4AF82A37758738CD6B956F460C"
-
-echo "3"
 
 log() {
 	>&2 printf "$*\n"
@@ -20,8 +14,6 @@ log_err() {
 log_ok() {
 	log "\t-> ${*:-ok}" # if nothing passed, write "ok"
 }
-
-echo "4"
 
 # Takes dependencies, as arguments, and checks if they're installed.
 has_deps() {
@@ -37,27 +29,19 @@ has_deps() {
 	done
 }
 
-echo "5"
-
 get_last_url() {
 	curl -ILs  -o /dev/null  -w "%{url_effective}"  "$LATEST_RASPBIAN"
 }
-
-echo "6"
 
 # Takes URL, returns filename
 extract_filename() {
 	basename "$1"
 }
 
-echo "7"
-
 # Takes URL, returns version
 extract_version() {
 	extract_filename "$1" | grep -Eo '\d{4}-\d{2}-\d{2}'
 }
-
-echo "8"
 
 # Takes $url downloads `.zip`, `.zip.sha256`, and `.zip.sig`
 download() {
@@ -66,8 +50,6 @@ download() {
 	wget -cq "$url" "$url.sig" "$url.sha256"
 	log_ok
 }
-
-echo "9"
 
 # Takes $original_zip, and verifies consistency, and signature of image
 verify() {
@@ -95,8 +77,6 @@ verify() {
 	log_ok "Valid signature"
 }
 
-echo "a"
-
 mount_image() {
 	original_image="$1"
 
@@ -121,8 +101,6 @@ mount_image() {
 	log_ok "$original_image mounted at $mount_dir"
 }
 
-echo "b"
-
 install_firstrun() {
 	file=firstboot.service
 	path=/mnt/raspbian/etc/systemd/system
@@ -138,8 +116,6 @@ install_firstrun() {
 		log_ok "Enabled as ${path#/mnt/raspbian}/multi-user.target.wants/$file"
 	)
 }
-
-echo "c"
 
 all() {
 	url="$(get_last_url)"
@@ -195,6 +171,7 @@ case "$1" in
 version)
 	echo "bbbb"
   extract_version "$(get_last_url)"
+  echo "cccc"
 	exit 0
 	;;
 
