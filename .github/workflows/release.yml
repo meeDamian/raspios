@@ -7,54 +7,63 @@ on:
   schedule:
     - cron: '20 4 * * *'
 
-env:
-  LATEST_RASPBIAN: https://downloads.raspberrypi.org/raspbian_lite_latest
-  ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
-
 jobs:
   check:
     name: Check new Raspbian Release
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check if new Release needed
-        run: |
-          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
-          FILE="$(echo "$URL" | grep -Eo '\d{4}-\d{2}-\d{2}-raspbian.*.zip')"
-          VERSION="$(echo "$FILE" | grep -Eo '\d{4}-\d{2}-\d{2}')"
+      - uses: actions/checkout@v2
 
-          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
-          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
-            echo "Nothig to do. Exiting."
-            exit 0
-          fi
+      - name: Prepare
+        run: mkdir images/
 
-          echo ::set-env name=URL::"$URL"
-          echo ::set-env name=FILE::"$FILE"
-          echo ::set-env name=VERSION::"$VERSION"
+      - name: Build
+        run: docker build -t rrr .
 
+      - name: Run
+        run: docker run --rm -it --privileged -v="$(pwd)/images:/raspbian/" rrr
 
-      - name: Prepare Release
-        if: env.URL != ''
-        env:
-          KEY: 54C3DD610D9D1B4AF82A37758738CD6B956F460C
-        run: |
-          mkdir -p image/mnt/
-          cd image
-
-          wget -q "$URL"{.sig,.sha256,}
-          ls -la
-
-          sha256sum -c "$FILE.sha256"
-
-          gpg --recv-key "$KEY"
-          gpg --verify "$FILE.sig"
-
-          unzip "$FILE"
-
-      - name: mount
-        if: env.URL != ''
-        run: mount -o loop "${FILE%.zip}.img" ./mnt/
+#      - name: Check if new Release needed
+#        env:
+#          LATEST_RASPBIAN: https://downloads.raspberrypi.org/raspbian_lite_latest
+#          ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
+#        run: |
+#          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
+#          FILE="$(echo "$URL" | grep -Eo '\d{4}-\d{2}-\d{2}-raspbian.*.zip')"
+#          VERSION="$(echo "$FILE" | grep -Eo '\d{4}-\d{2}-\d{2}')"
+#
+#          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
+#          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
+#            echo "Nothig to do. Exiting."
+#          fi
+#
+#          echo ::set-env name=URL::"$URL"
+#          echo ::set-env name=FILE::"$FILE"
+#          echo ::set-env name=VERSION::"$VERSION"
+#
+#
+#      - name: Prepare Release
+#        if: env.URL != ''
+#        env:
+#          KEY: 54C3DD610D9D1B4AF82A37758738CD6B956F460C
+#        run: |
+#          mkdir -p image/mnt/
+#          cd image
+#
+#          wget -q "$URL"{.sig,.sha256,}
+#          ls -la
+#
+#          sha256sum -c "$FILE.sha256"
+#
+#          gpg --recv-key "$KEY"
+#          gpg --verify "$FILE.sig"
+#
+#          unzip "$FILE"
+#
+#      - name: mount
+#        if: env.URL != ''
+#        run: mount -o loop "${FILE%.zip}.img" ./mnt/
 
 
 
