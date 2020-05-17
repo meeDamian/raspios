@@ -19,6 +19,9 @@ jobs:
         env:
           ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
         run: |
+          echo '------'
+          ./bla.sh
+          echo '======'
           VERSION="$(./modify-image.sh version)"
 
 #          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
