@@ -170,6 +170,8 @@ echo "aaaa"
 case "$1" in
 version)
 	echo "bbbb"
+	get_last_url
+	echo "bbcc"
   extract_version "$(get_last_url)"
   echo "cccc"
 	exit 0
