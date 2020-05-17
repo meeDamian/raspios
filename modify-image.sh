@@ -82,7 +82,7 @@ mount_ext4() {
 
 	log "Mounting ${image_name}…"
 
-	startsector="$(file "$image_name" | grep -Eo 'startsector \d+' | cut -d' ' -f2 | sort -nr | head -n1)"
+	startsector="$(file "$image_name" | grep -Eo 'startsector [[:digit:]]+' | cut -d' ' -f2 | sort -nr | head -n1)"
 	if [ -z "$startsector" ]; then
 		log_err "Unable to find start sector of the last partition…"
 		return 1
@@ -117,7 +117,7 @@ all() {
 	)
 }
 
-if ! has_deps grep wget gpg sha256sum unzip; then
+if ! has_deps curl file gpg grep sha256sum unzip wget; then
 	exit 1
 fi
 
