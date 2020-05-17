@@ -20,8 +20,8 @@ jobs:
           ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
         run: |
           ls -la
-          echo '----
-          ./modify-image.sh  version
+          echo '----'
+          ./modify-image.sh version
           echo '-----'
           VERSION="$(./modify-image.sh version)"
           echo '-----'
