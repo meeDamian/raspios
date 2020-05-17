@@ -40,7 +40,7 @@ extract_filename() {
 
 # Takes URL, returns version
 extract_version() {
-	extract_filename "$1" | grep -Eo '\d{4}-\d{2}-\d{2}'
+	extract_filename "$1" | grep -Eo '[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}'
 }
 
 # Takes $url downloads `.zip`, `.zip.sha256`, and `.zip.sig`
@@ -165,15 +165,9 @@ all() {
 	log_ok "$firstboot_checksum"
 }
 
-echo "aaaa"
-
 case "$1" in
 version)
-	echo "bbbb"
-	get_last_url
-	echo "bbcc"
   extract_version "$(get_last_url)"
-  echo "cccc"
 	exit 0
 	;;
 
