@@ -90,9 +90,9 @@ mount_ext4() {
 
 	log_ok "Found startsector: $startsector"
 
-	mkdir -p /mnt/
-	mount -o "loop,offset=$((startsector*512))" "$image_name" /mnt/raspbian/
-	ls -la /mnt/raspbian/
+#	mkdir -p /mnt/
+#	mount -o "loop,offset=$((startsector*512))" "$image_name" /mnt/raspbian/
+#	ls -la /mnt/raspbian/
 }
 
 all() {
