@@ -15,57 +15,25 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Prepare
-        run: mkdir images/
+      - name: Check
+        run: |
+          VERSION="$(./modify-image.sh version)"
+
+          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
+          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
+            echo "Nothing to do. Exiting."
+            exit 0
+          fi
+
+          echo ::set-env name=do::"Yaaaaaaas"
 
       - name: Build
-        run: docker build -t rrr .
+        if: env.DO != ''
+        run: mkdir images/ && docker build -t builder .
 
       - name: Run
-        run: docker run --rm --privileged -v="$(pwd)/images:/raspbian/" rrr
-
-#      - name: Check if new Release needed
-#        env:
-#          LATEST_RASPBIAN: https://downloads.raspberrypi.org/raspbian_lite_latest
-#          ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
-#        run: |
-#          URL="$(curl -ILs -o /dev/null -w %{url_effective} "$LATEST_RASPBIAN")"
-#          FILE="$(echo "$URL" | grep -Eo '\d{4}-\d{2}-\d{2}-raspbian.*.zip')"
-#          VERSION="$(echo "$FILE" | grep -Eo '\d{4}-\d{2}-\d{2}')"
-#
-#          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
-#          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
-#            echo "Nothig to do. Exiting."
-#          fi
-#
-#          echo ::set-env name=URL::"$URL"
-#          echo ::set-env name=FILE::"$FILE"
-#          echo ::set-env name=VERSION::"$VERSION"
-#
-#
-#      - name: Prepare Release
-#        if: env.URL != ''
-#        env:
-#          KEY: 54C3DD610D9D1B4AF82A37758738CD6B956F460C
-#        run: |
-#          mkdir -p image/mnt/
-#          cd image
-#
-#          wget -q "$URL"{.sig,.sha256,}
-#          ls -la
-#
-#          sha256sum -c "$FILE.sha256"
-#
-#          gpg --recv-key "$KEY"
-#          gpg --verify "$FILE.sig"
-#
-#          unzip "$FILE"
-#
-#      - name: mount
-#        if: env.URL != ''
-#        run: mount -o loop "${FILE%.zip}.img" ./mnt/
-
-
+        if: env.DO != ''
+        run: docker run --rm --privileged -v="$(pwd)/images/:/raspbian/" builder
 
 
 #      - name: Create Release
