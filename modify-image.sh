@@ -165,9 +165,11 @@ all() {
 	log_ok "$firstboot_checksum"
 }
 
+echo "aaaa"
 
 case "$1" in
 version)
+	echo "bbbb"
   extract_version "$(get_last_url)"
 	exit 0
 	;;
