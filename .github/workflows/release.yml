@@ -20,7 +20,11 @@ jobs:
           ALL_OWN_RELEASES: https://api.github.com/repos/$GITHUB_REPOSITORY/releases
         run: |
           ls -la
+          echo '----
+          ./modify-image.sh  version
+          echo '-----'
           VERSION="$(./modify-image.sh version)"
+          echo '-----'
 
 #          TAGS="$(wget -qO- "$ALL_OWN_RELEASES" | jq -r '.[].tag_name')"
 #          if [ -n "$TAGS" ] && echo "$TAGS" | grep "$VERSION"; then
