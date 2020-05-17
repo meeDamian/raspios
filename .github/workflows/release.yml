@@ -15,6 +15,7 @@ jobs:
   check:
     name: Check new Raspbian Release
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Get direct URL of latest Raspbian release
