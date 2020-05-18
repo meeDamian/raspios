@@ -13,4 +13,4 @@ VOLUME /raspbian/
 WORKDIR /raspbian/
 
 ENTRYPOINT ["/usr/local/bin/modify-image"]
-CMD ["magic", "/raspbian/"]
+CMD ["create", "/raspbian/"]

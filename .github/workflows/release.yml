@@ -26,28 +26,56 @@ jobs:
             echo "Nothing to do. Exiting."
             exit 0
           fi
-
-          echo ::set-env name=do::"Yaaaaaaas"
-
-      - name: Build
-        if: env.DO != ''
-        run: mkdir images/ && docker build -t builder .
-
-      - name: Run
-        if: env.DO != ''
-        run: docker run --rm --privileged -v="$(pwd)/images/:/raspbian/" builder
+          echo ::set-env name=VERSION::"$VERSION"
 
 
+      - name: Build Docker image
+        if: env.VERSION != ''
+        run: docker build -t builder .
 
-#      - name: Create Release
-#        uses: meeDamian/github-release@2.0
-#        if: env.URL != ''
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          tag: ${{ env.VERSION }}
-#          name: ${{ env.FILE }}
-#          draft: true
-#          prerelease: true
-#          allow_override: false
-#          body: |
-#            This Release adds [`firstrun.sh`](/firstrun.sh) capabilities to original Raspbian image [${{ env.FILE }}](${{ env.URL }}).
+      - name: Modify Raspbian image
+        if: env.VERSION != ''
+        run: |
+          mkdir images/
+          docker run --rm --privileged -v="$(pwd)/images/:/raspbian/" builder
+
+          echo ::set-env name=FILE::"$(cd images && ls *-firstboot.zip)"
+
+      - name: Create Github Release
+        uses: meeDamian/github-release@2.0
+        if: env.VERSION != '' && env.FILE != ''
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.VERSION }}
+          name: ${{ env.FILE }}
+          draft: true
+          prerelease: true
+          allow_override: false
+          gzip: false
+          files: >
+            ${{ env.FILE }}
+            ${{ env.FILE }}.sha256
+          body: >
+            This Release adds [`firstrun.sh`](/firstrun.sh) capabilities to
+            the original Raspbian image [${{ env.FILE }}](${{ env.URL }}).
+
+      - name: Comment
+        if: steps.release.outputs.release_id != ''
+        env:
+          URL: https://api.github.com/repos/$GITHUB_REPOSITORY/issues
+          body: >
+            Release https://github.com/$GITHUB_REPOSITORY/releases/tag/$VERSION has been created.
+
+            It's based on $FILE bla bla
+        run: |
+          jq -nc \
+            --arg title "Raspbian $VERSION has been released" \
+            --arg body "$(echo "$body" | sed ':a;N;$!ba;s/\n/\\n/g')")" \
+            --argjson assignees '["meeDamian"]' \
+            --argjson labels '["pending-approval"]' \
+            '{$title, $body, $assignees, $labels}' \
+          | curl -d @- \
+            -X "POST" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "$URL"
