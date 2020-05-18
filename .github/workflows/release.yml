@@ -49,7 +49,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ env.VERSION }}
           name: ${{ env.FILE }}
-          draft: true
           prerelease: true
           allow_override: false
           gzip: false
@@ -71,7 +70,7 @@ jobs:
         run: |
           jq -nc \
             --arg title "Raspbian $VERSION has been released" \
-            --arg body "$(echo "$body" | sed ':a;N;$!ba;s/\n/\\n/g')")" \
+            --arg body "$(echo "$body" | sed ':a;N;$!ba;s/\n/\\n/g')" \
             --argjson assignees '["meeDamian"]' \
             --argjson labels '["pending-approval"]' \
             '{$title, $body, $assignees, $labels}' \
