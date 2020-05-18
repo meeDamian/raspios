@@ -56,7 +56,7 @@ jobs:
             images/${{ env.FILE }}
             images/${{ env.FILE }}.sha256
           body: >
-            This Release adds [`firstrun.sh`](/firstrun.sh) capabilities to
+            This Release adds [`firstboot.sh`](/firstboot.sh) capabilities to
             the original Raspbian image [${{ env.FILE }}](${{ env.URL }}).
 
       - name: Comment
@@ -68,6 +68,7 @@ jobs:
 
             It's based on $FILE bla bla
         run: |
+          echo "$URL"
           jq -nc \
             --arg title "Raspbian $VERSION has been released" \
             --arg body "$(echo "$body" | sed ':a;N;$!ba;s/\n/\\n/g')" \
