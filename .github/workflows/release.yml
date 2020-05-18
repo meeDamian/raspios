@@ -54,8 +54,8 @@ jobs:
           allow_override: false
           gzip: false
           files: >
-            ${{ env.FILE }}
-            ${{ env.FILE }}.sha256
+            images/${{ env.FILE }}
+            images/${{ env.FILE }}.sha256
           body: >
             This Release adds [`firstrun.sh`](/firstrun.sh) capabilities to
             the original Raspbian image [${{ env.FILE }}](${{ env.URL }}).
