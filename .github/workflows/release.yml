@@ -64,16 +64,15 @@ jobs:
         env:
           URL: https://api.github.com/repos/${{ github.repository }}/issues
           body: >
-            Release https://github.com/${{ github.repository }}/releases/tag/${{ env.VERSION }} has been created.
+            New Raspbian Lite release detected.  It has been modified with `firstboot.service`, and pre-released as https://github.com/${{ github.repository }}/releases/tag/${{ env.VERSION }}.
 
-            It's based on ${{ env.FILE }} bla bla.
+            Please verify, [everything checks out](https://github.com/${{ github.repository }}/runs/${{ github.run_id }}?check_suite_focus=true), and upgrade `Pre-release` to `Release`.
         run: |
-          echo "$URL"
           jq -nc \
-            --arg title "Raspbian $VERSION has been released" \
-            --arg body "$(echo "$body" | sed ':a;N;$!ba;s/\n/\\n/g')" \
+            --arg title "$VERSION released" \
+            --arg body "$body" \
             --argjson assignees '["meeDamian"]' \
-            --argjson labels '["pending-approval"]' \
+            --argjson labels '["release-pending-approval"]' \
             '{$title, $body, $assignees, $labels}' \
           | curl -d @- \
             -X "POST" \
