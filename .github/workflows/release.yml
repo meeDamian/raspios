@@ -62,9 +62,9 @@ jobs:
       - name: Comment
         if: steps.release.outputs.release_id != ''
         env:
-          URL: https://api.github.com/repos/${{ env.GITHUB_REPOSITORY }}/issues
+          URL: https://api.github.com/repos/${{ github.repository }}/issues
           body: >
-            Release https://github.com/${{ env.GITHUB_REPOSITORY }}/releases/tag/${{ env.VERSION }} has been created.
+            Release https://github.com/${{ github.repository }}/releases/tag/${{ env.VERSION }} has been created.
 
             It's based on ${{ env.FILE }} bla bla.
         run: |
@@ -79,4 +79,4 @@ jobs:
             -X "POST" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "$URL" \
-          | jq -r '.id'
+          | jq '.'
