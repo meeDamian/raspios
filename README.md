@@ -14,9 +14,9 @@ The easiest way is going to [Releases], and downloading the latest one.
 
 Releases are created automatically upon each new Raspbian release, you can see their build log either directly in [Actions tab][actions], or by searching for [`release-pending-approval`][issues] issues. 
 
-[Releases]: /releases
-[actions]: /actions
-[issues]: /issues?q=is%3Aissue+sort%3Aupdated-desc+label%3Arelease-pending-approval+
+[Releases]: https://github.com/meeDamian/raspbian/releases
+[actions]: https://github.com/meeDamian/raspbian/actions
+[issues]: https://github.com/meeDamian/raspbian/issues?q=is%3Aissue+sort%3Aupdated-desc+label%3Arelease-pending-approval+
 
 
 ### 2. Docker
