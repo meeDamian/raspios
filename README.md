@@ -29,6 +29,8 @@ Second easiest path is (after cloning this repo) running:
 [docker-build]: https://github.com/meeDamian/raspbian/blob/731a1681e0f9dd9ba8b02b810bb473c286b405e7/.github/workflows/release.yml#L34
 [docker-run]: https://github.com/meeDamian/raspbian/blob/731a1681e0f9dd9ba8b02b810bb473c286b405e7/.github/workflows/release.yml#L40
 
+> **NOTE:** `--privileged` flag is required because [`mount`]ing a filesystem requires root.
+
 
 ### 3. Script
 
@@ -37,6 +39,10 @@ If you're on a Linux box, you can (after cloning this repo) run:
 ```shell script
 ./modify-image.sh create images/
 ```
+
+> **NOTE:** `sudo` might be required because [`mount`]ing a filesystem requires root.
+
+[`mount`]: https://github.com/meeDamian/raspbian/blob/master/modify-image.sh#L166
 
 
 ### 4. Manual
