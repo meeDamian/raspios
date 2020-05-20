@@ -28,6 +28,10 @@ jobs:
           fi
           echo ::set-env name=VERSION::"$VERSION"
 
+          URL="$(./modify-image.sh url)"
+          echo ::set-env name=SRC_URL::"$URL"
+          echo ::set-env name=SRC_FILE::"$(basename "$URL")"
+
 
       - name: Build Docker image
         if: env.VERSION != ''
@@ -56,8 +60,8 @@ jobs:
             images/${{ env.FILE }}
             images/${{ env.FILE }}.sha256
           body: >
-            This Release adds [`firstboot.sh`](/firstboot.sh) capabilities to
-            the original Raspbian image [${{ env.FILE }}](${{ env.URL }}).
+            This release adds [`firstboot.sh`](/firstboot.service#L8) capabilities to
+            the original Raspbian Lite image: [${{ env.SRC_FILE }}](${{ env.SRC_URL }}).
 
       - name: Comment
         if: steps.release.outputs.release_id != ''

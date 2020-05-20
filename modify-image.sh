@@ -4,95 +4,112 @@ set -e
 
 show_help() {
   cat << EOF >&2
-modify-image.sh v1.0.0
+modify-image.sh v1.0.1
 
 Modify Raspbian Lite image to recognize, and run 'firstboot.sh' placed in '/boot/'.
 
-Usage: ./modify-image COMMAND [DIR]
+Usage: ./modify-image.sh COMMAND
+       ./modify-image.sh create [DIR] [URL]
 
-Where COMMAND is one of: version, help, or create.
+Where COMMAND is one of: help, url, version.
 
 The 'create' COMMAND goal is:
 
-  1. Download most recent Raspbian image into DIR/ (if not there already)
-  2. And in that image:
-  3. Install /etc/systemd/system/firstboot.service
-  4. Enable it with a symlink to it at /etc/systemd/system/multi-user.target.wants/
-  5. Save it modified, compressed, and check-summed with '-firstboot' suffix
+  0. Change to DIR (if specified)
+  1. Download most recent Raspbian Lite image
+       (unless direct URL to another release specified)
+  2. Modify that image with:
+  3.   Install /etc/systemd/system/firstboot.service
+  4.   Enable it by creating a symlink to it at:
+         /etc/systemd/system/multi-user.target.wants/
+  5. Compress & check-sum the result
+  6. Save it with '-firstboot' suffix
 
-For the exact explanation, 'cat' this file and read top ⬇ bottom :).
+For the exact explanation 'cat' this file and read top ⬇ bottom :).
 
 Examples:
 
-  ./scripts/download  help          # Shows the very thing you're reading
-  ./scripts/download  version       # Fetches, and returns latest Raspbian version
-  ./scripts/download  create        # Create firstboot flavor of Raspbian in current directory
+  ./modify-image.sh  help          # Shows the very thing you're reading
+  ./modify-image.sh  version       # Fetches, and returns latest Raspbian version
+  ./modify-image.sh  create        # Create firstboot flavor of Raspbian in current directory
+  ./modify-image.sh  create /tmp   # Create firstboot flavor of Raspbian in /tmp
+
+  # And to create release of ex. Raspbian Lite dated 2017-04-10 in /tmp, run:
+  ./modify-image.sh  create /tmp https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-04-10/2017-04-10-raspbian-jessie-lite.zip
 
 github: github.com/meeDamian/raspbian/
 
 EOF
 }
 
-# If no arguments, or 'help' passed, show_help and exit
+# Exit, after showing help, on no arguments or 'help' passed
 if [ "$#" -le 0 ] || [ "$1" = "help" ]; then
 	show_help
 	shift && exit 0 || exit 1
 fi
 
-# Define some simple utility fns
-_log() { >&2 printf "$*\n"; }
-log() { _log "\n$*…"; }
-log_err() { _log "\n\t-> ERR: $*\n"; }
-log_ok() { _log "\t-> ${*:-ok}"; }  # if nothing passed, write "ok"
+# Define utility fns
+_log() { >&2 printf "$*\n"; }           # print all arguments to stderr
+log() { _log "\n$*…"; }                 # print start of new section
+log_err() { _log "\n\t-> ERR: $*\n"; }  # print section's error
+log_ok() { _log "\t-> ${*:-ok}"; }      # print passed section status update, or "ok"
 missing_deps() {
 	for d in "$@"; do
 		test -x "$(command -v "$d")" || echo "$d"
 	done | tr '\n' ' '
 }
 
-# Check if `curl` is intalled, and available
+# Exit error, if `curl` is not installed & available
 missing="$(missing_deps curl)"
 if [ -n "$missing" ]; then
 	_log "\nChecking dependencies…\n\n\t-> ERR: Missing: $missing\n"
 	exit 1
 fi
 
-
+# This link always redirects to latest release
 LATEST_RASPBIAN="https://downloads.raspberrypi.org/raspbian_lite_latest"
 
-# Returns direct URL to the latest Raspbian image
+# Uncomment below, if you prefer Raspbian Desktop over Lite
+#LATEST_RASPBIAN="https://downloads.raspberrypi.org/raspbian_latest"
+
+# Return direct URL to the latest Raspbian image
 get_last_url() {
 	curl -ILs  -o /dev/null  -w "%{url_effective}"  "$LATEST_RASPBIAN"
 }
 
-# Takes URL, returns filename
-extract_filename() {
-	basename "$1"
-}
-
-# Takes URL, returns version
-extract_version() {
-	extract_filename "$1" | grep -Eo '[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}'
-}
-
-# Get latest Raspbian URL
+# Exit error, if unable to get direct URL to latest release
 if ! URL="$(get_last_url)"; then
 	_log "\n\tERR: Unable to figure out latest version\n";
 	exit 1
 fi
 
-# Only return latest Raspbian version, and exit
+# Exit after returning URL to Raspbian's latest release
+if [ "$1" = "url" ]; then
+	echo "$URL"
+	exit 0
+fi
+
+# Take URL, return filename
+extract_filename() { basename "$1"; }
+
+# Take URL, return version (fmt: YYYY-MM-DD)
+extract_version() {
+	extract_filename "$1" | grep -Eo '[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}'
+}
+
+# Exit after returning Raspbian's latest version
 if [ "$1" = "version" ]; then
 	extract_version "$URL"
 	exit 0
 fi
 
-# 'help' & 'check' are already handled.  Anything other than 'create' is an error.
+# Exit error, if 1st argument is anything other than 'create' at this point
 if [ "$1" != "create" ]; then
 	_log "\n\tERR: Unknown command: '$1'\n";
 	show_help
 	exit 1
 fi
+
 
 log "Checking dependencies"
 missing="$(missing_deps curl file gpg grep sha256sum zip unzip wget)"
@@ -103,11 +120,20 @@ fi
 
 log_ok
 
-# Start a subshell
-(
-	# If $DIR provided, try to `cd` into it
-	[ -n "$2" ] && cd "$2"
 
+# Start a subshell to prevent script from changing directory
+(
+	# Change dir to $2, if it's passed and is not a URL
+	if [ -n "$2" ] && [ "${2#http*://}" = "$2" ]; then
+		cd "$2"; shift
+	fi
+
+	# Use URL, if provided
+	if [ -n "$2" ] && [ "${2#http*://}" != "$2" ]; then
+		URL="$2"
+	fi
+
+	# Extract .zip filename from the URL
 	original_zip="$(extract_filename "$URL")"
 
 
@@ -140,6 +166,7 @@ log_ok
 	log_ok "Signature valid"
 
 
+	# Change extension from .zip to .img
 	original_img="${original_zip%.zip}.img"
 
 	log "Inflating"  "$original_zip"
@@ -170,19 +197,22 @@ log_ok
 	log_ok
 
 
+	os_path=etc/systemd/system
 	service_file=firstboot.service
-	os_path=/etc/systemd/system
 	service_src="$(pwd)/$service_file"
+
+	# Change $service_src, when running in Docker
 	[ -f "/data/$service_file" ] && service_src="/data/$service_file"
 
 	log "Installing service"  "$service_file"
-	cp "$service_src" "$mount_dir$os_path/"
-	log_ok "Installed at $os_path/$service_file"
+	cp "$service_src" "$mount_dir/$os_path/"
+	log_ok "Installed at /$os_path/$service_file"
 
+	# Another subshell to avoid cd (we (need (to (go (deeper(!))))))
 	(
-		cd "$mount_dir$os_path/multi-user.target.wants/"
-		ln -s "$os_path/$service_file" .
-		log_ok "Enabled as $os_path/multi-user.target.wants/$service_file"
+		cd "$mount_dir/$os_path/multi-user.target.wants/"
+		ln -s "/$os_path/$service_file" .
+		log_ok "Enabled as /$os_path/multi-user.target.wants/$service_file"
 	)
 
 
@@ -207,7 +237,7 @@ log_ok
 
 	firstboot_sha256="$firstboot_zip.sha256"
 
-	log "Creating checksum"  "of $firstboot_zip]"
+	log "Creating checksum"  "of $firstboot_zip"
 	sha256sum "$firstboot_zip" > "$firstboot_sha256"
 	log_ok "$(cat "$firstboot_sha256")"
 	log_ok "Saved as $firstboot_sha256"
