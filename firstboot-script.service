@@ -1,0 +1,14 @@
+[Unit]
+Description=FirstBoot
+After=network.target
+Before=rc-local.service
+ConditionFileNotEmpty=/boot/firstboot-script.sh
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/script --command=/boot/firstboot-script.sh --return --flush --timing=/boot/firstboot-script-log.tm /boot/firstboot-script-log.out
+ExecStartPost=/bin/mv /boot/firstboot-script.sh /boot/firstboot-script.sh.done
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

@@ -198,22 +198,26 @@ log_ok
 
 
 	os_path=etc/systemd/system
-	service_file=firstboot.service
-	service_src="$(pwd)/$service_file"
 
-	# Change $service_src, when running in Docker
-	[ -f "/data/$service_file" ] && service_src="/data/$service_file"
+	log "Installing services"
+	for  service  in firstboot firstboot-script; do
+		service_file="$service.service"
+		service_src="$(pwd)/$service_file"
 
-	log "Installing service"  "$service_file"
-	cp "$service_src" "$mount_dir/$os_path/"
-	log_ok "Installed at /$os_path/$service_file"
+		# Change $service_src, when running in Docker
+		[ -f "/data/$service_file" ] && service_src="/data/$service_file"
 
-	# Another subshell to avoid cd (we (need (to (go (deeper(!))))))
-	(
-		cd "$mount_dir/$os_path/multi-user.target.wants/"
-		ln -s "/$os_path/$service_file" .
-		log_ok "Enabled as /$os_path/multi-user.target.wants/$service_file"
-	)
+		cp "$service_src" "$mount_dir/$os_path/"
+		log_ok "$service installed at /$os_path/$service_file"
+
+		# Another subshell to avoid cd (we (need (to (go (deeper(!))))))
+		(
+			cd "$mount_dir/$os_path/multi-user.target.wants/"
+			ln -s "/$os_path/$service_file" .
+			log_ok "$service enabled as /$os_path/multi-user.target.wants/$service_file"
+		)
+
+	done
 
 
 	log "Unmounting" "$mount_dir"

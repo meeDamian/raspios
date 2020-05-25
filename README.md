@@ -1,7 +1,13 @@
 Raspbian
 =========
 
-Literally just pure Raspbian Lite, but with added the ability to run a script on the first boot by putting it onto `/boot/` as `firstboot.sh`.
+Literally just pure Raspbian Lite, but with added the ability to run a script on the first boot by putting it onto `/boot/` as either:
+
+* `/boot/firstboot.sh` - Run provided script directly
+* `/boot/firstboot-script.sh` - Run via [`script(1)`][script] for complete session recording, that can be later played back using [`scriptreplay(1)`][replay]
+
+[script]: http://man7.org/linux/man-pages/man1/script.1.html
+[replay]: http://man7.org/linux/man-pages/man1/scriptreplay.1.html
 
 Repo is inspired by https://github.com/nmcclain/raspberian-firstboot, but has been automated, Dockerized, and fully scripted.
 
@@ -49,6 +55,10 @@ If you're on a Linux box, you can (after cloning this repo) run:
 
 You can also completely ignore all contents of this repo, download Raspbian Lite, and (assuming you have the ability to mount `ext4` on your OS):
 
+> **NOTE: For `firstboot-script.service` see [here].**
+
+[here]: /firstboot-script.service
+
 1. Mount second partition
 1. Install the service, by creating `$MOUNT_PATH/etc/systemd/system/firstboot.service` file, with the following contents:
     ```unit file (systemd)
@@ -59,9 +69,9 @@ You can also completely ignore all contents of this repo, download Raspbian Lite
     ConditionFileNotEmpty=/boot/firstboot.sh
     
     [Service]
+    Type=oneshot
     ExecStart=/boot/firstboot.sh
     ExecStartPost=/bin/mv /boot/firstboot.sh /boot/firstboot.sh.done
-    Type=oneshot
     RemainAfterExit=no
     
     [Install]
