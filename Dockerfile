@@ -12,11 +12,11 @@ RUN apt-get update && \
 ADD modify-image.sh /usr/local/bin/modify-image
 RUN chmod +x        /usr/local/bin/modify-image
 
-RUN mkdir -p /mnt/raspbian/                    /data/
+RUN mkdir -p /mnt/raspios/                     /data/
 ADD firstboot.service firstboot-script.service /data/
 
-VOLUME  /raspbian/
-WORKDIR /raspbian/
+VOLUME  /raspios/
+WORKDIR /raspios/
 
 ENTRYPOINT ["/usr/local/bin/modify-image"]
-CMD ["create", "/raspbian/"]
+CMD ["create", "/raspios/"]

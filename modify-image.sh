@@ -6,7 +6,7 @@ show_help() {
   cat << EOF >&2
 modify-image.sh v1.0.1
 
-Modify Raspbian Lite image to recognize, and run 'firstboot.sh' placed in '/boot/'.
+Modify Raspberry Pi OS Lite image to recognize, and run 'firstboot.sh' placed in '/boot/'.
 
 Usage: ./modify-image.sh COMMAND
        ./modify-image.sh create [DIR] [URL]
@@ -16,7 +16,7 @@ Where COMMAND is one of: help, url, version.
 The 'create' COMMAND goal is:
 
   0. Change to DIR (if specified)
-  1. Download most recent Raspbian Lite image
+  1. Download most recent Raspberry Pi OS Lite image
        (unless direct URL to another release specified)
   2. Modify that image with:
   3.   Install /etc/systemd/system/firstboot.service
@@ -30,14 +30,14 @@ For the exact explanation 'cat' this file and read top ⬇ bottom :).
 Examples:
 
   ./modify-image.sh  help          # Shows the very thing you're reading
-  ./modify-image.sh  version       # Fetches, and returns latest Raspbian version
-  ./modify-image.sh  create        # Create firstboot flavor of Raspbian in current directory
-  ./modify-image.sh  create /tmp   # Create firstboot flavor of Raspbian in /tmp
+  ./modify-image.sh  version       # Fetches, and returns latest Raspberry Pi OS version
+  ./modify-image.sh  create        # Create firstboot flavor of Raspberry Pi OS in current directory
+  ./modify-image.sh  create /tmp   # Create firstboot flavor of Raspberry Pi OS in /tmp
 
-  # And to create release of ex. Raspbian Lite dated 2017-04-10 in /tmp, run:
+  # And to create release of ex. Raspberry Pi OS Lite dated 2017-04-10 in /tmp, run:
   ./modify-image.sh  create /tmp https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-04-10/2017-04-10-raspbian-jessie-lite.zip
 
-github: github.com/meeDamian/raspbian/
+github: github.com/meeDamian/raspios/
 
 EOF
 }
@@ -67,14 +67,14 @@ if [ -n "$missing" ]; then
 fi
 
 # This link always redirects to latest release
-LATEST_RASPBIAN="https://downloads.raspberrypi.org/raspbian_lite_latest"
+LATEST_RASPIOS="https://downloads.raspberrypi.org/raspios_lite_armhf_latest"
 
-# Uncomment below, if you prefer Raspbian Desktop over Lite
-#LATEST_RASPBIAN="https://downloads.raspberrypi.org/raspbian_latest"
+# Uncomment below, if you prefer Raspberry Pi OS Desktop over Lite
+#LATEST_RASPIOS="https://downloads.raspberrypi.org/raspios_armhf_latest"
 
-# Return direct URL to the latest Raspbian image
+# Return direct URL to the latest Raspberry Pi OS image
 get_last_url() {
-	curl -ILs  -o /dev/null  -w "%{url_effective}"  "$LATEST_RASPBIAN"
+	curl -ILs  -o /dev/null  -w "%{url_effective}"  "$LATEST_RASPIOS"
 }
 
 # Exit error, if unable to get direct URL to latest release
@@ -83,7 +83,7 @@ if ! URL="$(get_last_url)"; then
 	exit 1
 fi
 
-# Exit after returning URL to Raspbian's latest release
+# Exit after returning URL to Raspberry Pi OS's latest release
 if [ "$1" = "url" ]; then
 	echo "$URL"
 	exit 0
@@ -97,7 +97,7 @@ extract_version() {
 	extract_filename "$1" | grep -Eo '[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}'
 }
 
-# Exit after returning Raspbian's latest version
+# Exit after returning Raspberry Pi OS's latest version
 if [ "$1" = "version" ]; then
 	extract_version "$URL"
 	exit 0
@@ -121,21 +121,21 @@ fi
 log_ok
 
 
-# Start a subshell to prevent script from changing directory
+# Start a subshell to avoid change-directory side-effect
 (
-	# Change dir to $2, if it's passed and is not a URL
+	# Change dir to $2, if passed and not URL
 	if [ -n "$2" ] && [ "${2#http*://}" = "$2" ]; then
 		cd "$2"; shift
 	fi
 
-	# Use URL, if provided
+	# Use specific URL, if provided
 	if [ -n "$2" ] && [ "${2#http*://}" != "$2" ]; then
 		URL="$2"
 	fi
 
-	# Extract .zip filename from the URL
-	original_zip="$(extract_filename "$URL")"
 
+	# Extract filename.zip from the URL
+	original_zip="$(extract_filename "$URL")"
 
 	log "Downloading"  "$original_zip to $(pwd)"
 	if ! wget -cq "$URL" "$URL.sig" "$URL.sha256"; then
@@ -152,8 +152,8 @@ log_ok
 	fi
 	log_ok "Checksum ok"
 
-	raspbian_key="54C3DD610D9D1B4AF82A37758738CD6B956F460C"
-	if ! gpg --keyserver keyserver.ubuntu.com --recv-keys "$raspbian_key"; then
+	raspios_key="54C3DD610D9D1B4AF82A37758738CD6B956F460C"
+	if ! gpg --keyserver keyserver.ubuntu.com --recv-keys "$raspios_key"; then
 		log_err "Unable to fetch GPG key"
 		exit 1
 	fi
@@ -166,19 +166,25 @@ log_ok
 	log_ok "Signature valid"
 
 
-	# Change extension from .zip to .img
+	# Create temporary DIR, and make sure it's removed upon EXIT
+	temp_dir="$(mktemp -d)"
+	# shellcheck disable=SC2064
+	trap "rm -rf $temp_dir" EXIT
+
+	# Get extracted name & full, temporary path to extraced image
 	original_img="${original_zip%.zip}.img"
+	temp_img="$temp_dir/$original_img"
 
 	log "Inflating"  "$original_zip"
-	if ! out="$(unzip -n "$original_zip")"; then
+	if ! out="$(unzip -n "$original_zip" -d "$temp_dir/")"; then
 		log_err "$out"
 		exit 1
 	fi
-	log_ok "$original_img created"
+	log_ok "$original_zip extracted to $temp_dir"
 
 
 	log "Scanning image"  "$original_img"
-	startsector="$(file "$original_img" | grep -Eo 'startsector [[:digit:]]+' | cut -d' ' -f2 | sort -nr | head -n1)"
+	startsector="$(file "$temp_img" | grep -Eo 'startsector [[:digit:]]+' | cut -d' ' -f2 | sort -nr | head -n1)"
 	if [ -z "$startsector" ]; then
 		echo "Can't find start sector of the last partition…"
 		exit 1
@@ -186,11 +192,11 @@ log_ok
 	log_ok "Start sector: $startsector"
 
 
-	mount_dir=/mnt/raspbian
+	mount_dir=/mnt/raspios
 	mkdir -p "$mount_dir"
 
 	log "Mounting"  "$original_img at $mount_dir"
-	if ! out="$(mount -o "loop,offset=$((startsector * 512))" "$original_img" "$mount_dir")"; then
+	if ! out="$(mount -o "loop,offset=$((startsector * 512))" "$temp_img" "$mount_dir")"; then
 		echo "Unable to mount: $out"
 		return 1
 	fi
@@ -227,8 +233,8 @@ log_ok
 
 	firstboot_img="${original_img%.img}-firstboot.img"
 
-	log "Renaming" "$original_img"
-	mv "$original_img" "$firstboot_img"
+	log "Renaming & moving" "$original_img"
+	mv "$temp_img" "./$firstboot_img"
 	log_ok "Renamed to $firstboot_img"
 
 

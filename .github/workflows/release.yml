@@ -9,7 +9,7 @@ on:
 
 jobs:
   check:
-    name: Check new Raspbian Release
+    name: Check new Raspberry Pi OS Release
     runs-on: ubuntu-latest
 
     steps:
@@ -37,11 +37,11 @@ jobs:
         if: env.VERSION != ''
         run: docker build -t builder .
 
-      - name: Modify Raspbian image
+      - name: Modify Raspberry Pi OS image
         if: env.VERSION != ''
         run: |
           mkdir images/
-          docker run --rm --privileged -v="$(pwd)/images/:/raspbian/" builder
+          docker run --rm --privileged -v="$(pwd)/images/:/raspios/" builder
 
           echo ::set-env name=FILE::"$(cd images && ls *-firstboot.zip)"
 
@@ -61,14 +61,14 @@ jobs:
             images/${{ env.FILE }}.sha256
           body: >
             This release adds [`firstboot.sh`](/firstboot.service#L8) capabilities to
-            the original Raspbian Lite image: [${{ env.SRC_FILE }}](${{ env.SRC_URL }}).
+            the original Raspberry Pi OS Lite image: [${{ env.SRC_FILE }}](${{ env.SRC_URL }}).
 
       - name: Comment
         if: steps.release.outputs.release_id != ''
         env:
           URL: https://api.github.com/repos/${{ github.repository }}/issues
           body: >
-            New Raspbian Lite release detected.  It has been modified with `firstboot.service`, and pre-released as https://github.com/${{ github.repository }}/releases/tag/${{ env.VERSION }}.
+            New Raspberry Pi OS Lite release detected.  It has been modified with `firstboot.service`, and pre-released as https://github.com/${{ github.repository }}/releases/tag/${{ env.VERSION }}.
 
             Please verify, [everything checks out](https://github.com/${{ github.repository }}/runs/${{ github.run_id }}?check_suite_focus=true), and upgrade `Pre-release` to `Release`.
         run: |
