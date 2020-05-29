@@ -52,7 +52,7 @@ If you're on a Linux box, you can (after cloning this repo) run:
 
 > **NOTE:** `sudo` might be required because [`mount`]ing a filesystem requires root.
 
-[`mount`]: https://github.com/meeDamian/raspios/blob/master/modify-image.sh#L166
+[`mount`]: https://github.com/meeDamian/raspios/blob/d3af7a29ee4c9cd09aae68badec95725c58c7010/modify-image.sh#L199
 
 
 ### 4. Manual
