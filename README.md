@@ -1,18 +1,82 @@
 Raspberry Pi OS
 ================
 
-Literally just pure Raspberry Pi OS Lite, but with added the ability to run a script on the first boot by putting it onto `/boot/` as either:
+Official Raspberry Pi OS Lite minimally **modified** with the ability to run a script on the first boot.
 
-* `/boot/firstboot.sh` - Run provided script directly
-* `/boot/firstboot-script.sh` - Run via [`script(1)`][script] for complete session recording, that can be later played back using [`scriptreplay(1)`][replay]
+Supported script filenames:
+
+* `/boot/firstboot.sh` - Just run the script on the first boot
+* `/boot/firstboot-script.sh` - Same as above, **except** _script_ is run with  [`script(1)`][script] for complete session recording, that can be later played back using [`scriptreplay(1)`][replay]
 
 [script]: http://man7.org/linux/man-pages/man1/script.1.html
 [replay]: http://man7.org/linux/man-pages/man1/scriptreplay.1.html
 
 Repo is inspired by https://github.com/nmcclain/raspberian-firstboot, but has been automated, Dockerized, and fully scripted.
 
-There are 4 ways to get the image:
+> **NOTE:** If `firstboot-script.sh` is used, recording of script run is saved as `/boot/firstboot-script-log.out` (timing file alongside as `firstboot-script-log.tm`)
 
+## Usage
+
+1. Download [latest image][latest]
+    <details><summary><b>Alternatives?</b></summary>
+
+    If downloading images built by other people is not your thing, you can also:
+    
+    1. Modify images yourself using provided scripts (in [Docker], or [not]), or even
+    1. [Manually] apply all necessary modifications
+    </details>
+    
+    [latest]: #1-releases
+    [docker]: #2-docker
+    [not]: #3-script
+    [manually]: #4-manual
+1. Burn it into a MicroSD Card
+    <details><summary><b>How?</b></summary>
+    
+    1. Probably the easiest is to use [Etcher]
+    1. Another way is [using `dd`][dd] on Linux:
+        ```shell script
+        dd bs=4M if=path/to/downloaded/file.img of=/dev/sdX conv=fsync
+        ```
+    1. Or MacOS:
+        ```shell script
+        dd bs=4M if=path/to/downloaded/file.img of=/dev/diskX conv=fsync
+        ```
+        
+    **NOTE:** `boot` partition will usually get mounted as `/Volumes/boot/` on MacOS, and _probably_ `/mnt/boot/` on Linux.
+    </details>
+    
+    [Etcher]: https://www.balena.io/etcher/
+    [dd]: https://www.raspberrypi.org/documentation/installation/installing-images/linux.md
+1. Mount it
+    <details><summary><b>How?</b></summary>
+    
+    1. **\[MacOS\]** Simply re-inserting the card should do the trick, if not then `diskutil`, or `Disk Utility` should help
+    1. **\[Linux\]** Hard to say exactly, but sth like:
+    ```sh
+    mkdir -p /mnt/boot/
+    sudo mount /dev/sdX /mnt/boot/
+    ```
+    </details>
+
+1. Add your script & mark it as executable
+    ```sh
+    # MacOS example:
+    cd /Volumes/boot/
+    
+    cat <<EOF > firstboot-script.sh
+    #!/bin/sh -e
+    
+    echo "Hello World!"
+    EOF
+    
+    chmod +x firstboot-script.sh
+    ```
+1. Safely eject, move the card into Raspberry Pi, and power it on
+
+## Download
+
+There are 4 possible ways, numbered from easiest to most manual.
 
 ### 1. Releases
 
