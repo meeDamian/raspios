@@ -2,11 +2,11 @@ FROM debian:buster-slim
 
 RUN apt-get update && \
     apt-get -y install \
-        curl \
-        file \
+        curl  \
+        file  \
         gnupg \
         unzip \
-        wget \
+        wget  \
         zip
 
 RUN mkdir -p /mnt/raspios/ /data/
