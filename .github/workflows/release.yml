@@ -26,17 +26,17 @@ jobs:
             echo "Nothing to do. Exiting."
             exit 0
           fi
-          echo ::set-env name=VERSION::"$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
           URL="$(./modify-image.sh url)"
-          echo ::set-env name=SRC_URL::"$URL"
-          echo ::set-env name=SRC_FILE::"$(basename "$URL")"
+          echo "SRC_URL=$URL"                >> $GITHUB_ENV
+          echo "SRC_FILE=$(basename "$URL")" >> $GITHUB_ENV
 
       - name: Modify Raspberry Pi OS image
         if: env.VERSION != ''
         run: |
           ./modify-image-in-docker.sh
-          echo ::set-env name=FILE::"$(cd images && ls *-firstboot.zip)"
+          echo "FILE=$(cd images && ls *-firstboot.zip)" >> $GITHUB_ENV
 
       - name: Create Github Release
         uses: meeDamian/github-release@2.0
